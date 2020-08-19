@@ -13,10 +13,10 @@ class MongoDriver{
         this.databaseString = databaseSTRING;
         this.collectionString = collectionSTRING;
     }
-    //Accpets recipeName:string, ingredients:string[]
-    //constructs Recipe Object(recipeName,ingreidnets)
+    //Accpets recipeName:string, ingredients:string[] then create Recipe Object
     //insert recipe Object into mongo database collection
-    //returns mongo collection.insertOne() result
+    //returns mongo collection.insertOne() on success
+    //returns null on failure
     async addRecipe(recipeName,ingredients){
        if(ingredients == null){
            return null;
@@ -24,7 +24,9 @@ class MongoDriver{
        if(recipeName == null){
            return null;
        }
-        var recipe = new Recipe(recipeName,ingredients);
+
+       var recipe = new Recipe(recipeName,ingredients);
+
        if(recipe.getIngredients().length <= 0){
            return null;
        }
@@ -88,7 +90,9 @@ class MongoDriver{
         }
     }
 
-
+    //Queries mongodb for {recipeName:recipeName}
+    //returns data in array format on success. May be empty
+    //else returns null
     async getRecipeByName(recipeName){
         try{
             const client = new MongoClient(this.uriString);
@@ -105,7 +109,7 @@ class MongoDriver{
         catch(e){
             console.error("Failed getRecipe() params: "+recipeName+" "+e);
             client.close();
-            return e;
+            return null
         }
        
         //string recipeName
@@ -133,7 +137,7 @@ class MongoDriver{
 
         }
     }
-
+    //returns all recipes in database in array format
     async getAllRecipe(){
         try{
             const client = new MongoClient(this.uriString);
@@ -142,11 +146,13 @@ class MongoDriver{
             const db = client.db(this.databaseString);
             const recipeCollection = db.collection(this.collectionString);
   
-            //console.log(await recipeCollection.find({recipeName:recipeName}).toArray());
+            var result = await recipeCollection.find({}).sort({_id:1}).toArray();
+            client.close();
             return result;
+            
         }
         catch(e){
-            console.error("Failed addRecipe() params: "+recipeName+" "+ingredients+e);
+            console.error("Failed in getAllRecipe():   "+e);
             return null
         }
         client.close();

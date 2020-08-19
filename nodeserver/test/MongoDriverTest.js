@@ -25,7 +25,7 @@ describe('mongoDriver addRecipe test',function(){
     });
     it('2. add bad recipe: ingredients == null',(done)=>{
         driver.addRecipe('testRecipe',null).then((promise)=>{
-           assert.equal(promise.result,"Fail");
+           assert.equal(promise,null);
            done();
             
         }).catch((e)=>{
@@ -34,7 +34,7 @@ describe('mongoDriver addRecipe test',function(){
     })
     it('3. add bad recipe: ingredients.length == 0',(done)=>{
         driver.addRecipe('testRecipe',[]).then((promise)=>{
-            assert.equal(promise.result,"Fail");
+            assert.equal(promise,null);
             done();
             
         }).catch((e)=>{
@@ -102,6 +102,7 @@ describe('Testing getAllrecipes',()=>{
         driver.dropCollection().then(()=>{
             driver.addMockData().then((p)=>{
                 driver.getAllRecipe().then((promise)=>{
+                    //console.log(promise);
                      assert.deepEqual(promise,mockData)
                      done();
                  }).catch((e)=>{

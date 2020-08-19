@@ -3,6 +3,7 @@ const MongoDriver = require('./MongoDriver').MongoDriver;
 const Recipe = require("./recipe").Recipe;
 
 var cors = require('cors');
+const { response } = require('express');
 
 var uri = "mongodb://localhost:27017";
 var dbname = "myRecipes";
@@ -21,7 +22,7 @@ app.use(express.urlencoded({ extended: true })) // for parsing application/x-www
 
 
 
-
+//returns all recipes in the database
 app.get('/recipes',(req,res)=>{
     
     res.set({
@@ -34,22 +35,43 @@ app.get('/recipes',(req,res)=>{
 })
 
 app.get('/recipe/:name',(req,res)=>{
+    var responseObject = {
+        status:"",
+        data:"",
+        message:"",
+    }
 
+    if(req.params.name == undefined){
+        responseObject.status = false;
+        responseObkect.data = null;
+        response.message = "No name found in req.params.name at /recipe/:name"
+        res.send(responseObject);
+    }
     try{
-        console.log("Get: /recipe/:name")
-   console.log(req.params);
 
-   res.set({
-    'Access-Control-Allow-Origin': 'http://localhost:4201'
-    })
-   
-    mongo.getRecipeByName(req.params.name).then(promise=>{
-        res.send(promise)
-    });
+        res.set({
+            'Access-Control-Allow-Origin': 'http://localhost:4201'
+        })
+    
+        mongo.getRecipeByName(req.params.name).then(promise=>{
+            if(promise === null){
+                responseObject.status = false
+                responseObject.data = null
+                responseObject.message = "Something went wrong in getRecipeByName() in mongoDriver"
+            }
+            else{
+                responseObject.status = true,
+                responseObject.data = promise,
+            }
+            res.send(responseObject)
+        });
 
     }
     catch(e){
-        res.send(e);
+        status = false
+        data=null
+        message=e;
+        res.send(responseObject);
     }
 })
 
@@ -58,20 +80,41 @@ app.get('/recipe/:name',(req,res)=>{
 // promise is {result:"Success",recipeAdded:recipeName}; on success OR
 //            {result:"Fail"} on fail
 app.post('/recipe/',(req,res)=>{
-   
+   var responseObject = {
+       status:"",
+       data:"",
+       message:"",
+   }
     res.set({
         'Access-Control-Allow-Origin': 'http://localhost:4201'
     })
     console.log("Recieved req at /recipe/")
     if(req.body.recipe === undefined){
-        res.send("Request not filled. No recipe found");
+        responseObject.status = false
+        responseObject.data = null
+        responseObject.message = "Request not filled. No recipe found"
+        res.send(responseObject);
+        return;
     }
     if(req.body.ingredients === undefined){
-        res.send("Request not filled. No ingredients found");
+        responseObject.status = false
+        responseObject.data = null
+        responseObject.message = "Request not filled. No ingredients found"
+        res.send(responseObject);
+        return;
     }
     //var r = new Recipe(req.body.recipe,req.body.ingredients);
     mongo.addRecipe(req.body.recipe,req.body.ingredients).then((promise)=>{
-        res.send(promise);
+        responseObject.status = true
+        responseObject.data = promise
+        responseObject.message = ""
+        if(promise === null){
+            responseObject.status = false
+            responseObject.data = promise
+            responseObject.message = ""
+            
+        }
+        res.send(responseObject);
     })
 })
 
